@@ -1,2 +1,0 @@
-# PCN
-point completion network
