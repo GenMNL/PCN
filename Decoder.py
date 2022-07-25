@@ -4,16 +4,16 @@ import torch.nn.functional as F
 from Encoder import *
 from module import *
 
-
 # ----------------------------------------------------------------------------------------
 # AffineDecoder is fully connection type decoder which generate coarse point cloud
 class AffineDecoder(nn.Module):
-    def __init__(self, num_coarse):
+    def __init__(self, num_coarse, emb_dim):
         super(AffineDecoder, self).__init__()
         self.num_coarse = num_coarse
+        self.emb_dim = emb_dim
 
         self.MakeCoarse = nn.Sequential(
-            nn.Linear(1024, 1024),
+            nn.Linear(self.emb_dim, 1024),
             nn.ReLU(),
             nn.Linear(1024, 1024),
             nn.ReLU(),
@@ -31,12 +31,13 @@ class AffineDecoder(nn.Module):
 # ----------------------------------------------------------------------------------------
 # FineDecoder is folding type decoder which make fine point cloud
 class FineDecoder(nn.Module):
-    def __init__(self, grid_size, num_coarse):
+    def __init__(self, grid_size, num_coarse, emb_dim):
         super(FineDecoder, self).__init__()
         self.grid_size = grid_size
         self.num_coarse = num_coarse
+        self.emb_dim = emb_dim
         self.MLP = nn.Sequential(
-            Conv_ReLU(1029, 512),
+            Conv_ReLU(self.emb_dim+2+3, 512),
             Conv_ReLU(512, 512),
             Conv_ReLU(512, 3),
         )
@@ -78,10 +79,10 @@ class FineDecoder(nn.Module):
 # test
 if __name__ == "__main__":
     input = torch.randn(10, 1024) # (batchsize, dim of feature vector)
-    affine_decoder = AffineDecoder(1024) # 1024 is the number of coarse point clouds.
+    affine_decoder = AffineDecoder(num_coarse=1024, emb_dim=1024) # 1024 is the number of coarse point clouds.
     coarse_output = affine_decoder(input)
 
-    fine_decoder = FineDecoder(4, 1024)
+    fine_decoder = FineDecoder(4, num_coarse=1024, emb_dim=1024)
     fine_output = fine_decoder(coarse_output, input)
     print(fine_output.shape)
 # ----------------------------------------------------------------------------------------

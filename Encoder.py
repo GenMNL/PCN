@@ -6,9 +6,10 @@ from module import *
 # ----------------------------------------------------------------------------------------
 # PCN uses PointNet for encoder 
 class PointNet(nn.Module):
-    def __init__(self, num_points):
+    def __init__(self, num_points, emb_dim):
         super(PointNet, self).__init__()
         self.num_points = num_points
+        self.emb_dim = emb_dim
 
         # MLP1 use for getting point feature
         self.MLP1 = nn.Sequential(
@@ -18,7 +19,7 @@ class PointNet(nn.Module):
         # MLP2 use for getting point feature which concern global and point feature
         self.MLP2 = nn.Sequential(
             Conv_ReLU(256*2, 512),
-            Conv_ReLU(512, 1024)
+            Conv_ReLU(512, self.emb_dim)
         )
         # MaxPool1 use for getting global feature
         self.MaxPool1 = nn.Sequential(
@@ -26,7 +27,7 @@ class PointNet(nn.Module):
         )
         # MaxPool2 use for getting encoder result
         self.MaxPool2 = nn.Sequential(
-            MaxPooling(1024, self.num_points)
+            MaxPooling(self.emb_dim, self.num_points)
         )
 
 
@@ -52,6 +53,6 @@ class PointNet(nn.Module):
 # test
 if __name__ == "__main__":
     input = torch.randn(10, 2000, 3) # (bachsize, num_point, channnel)
-    pointnet= PointNet(2000) # 2000 is num of points
+    pointnet= PointNet(2000, 1024) # 2000 is num of points
     test_coarse_output = pointnet(input)
     print(test_coarse_output.shape)
