@@ -1,5 +1,5 @@
 # dataset
-./data/ShapeNetCompletion/*
+*.pcd
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
