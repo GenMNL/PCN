@@ -1,1 +1,64 @@
 import torch
+from torch.utils.data import Dataset
+from torch.utils.data import dataloader
+import numpy as np
+import json
+import os
+
+class MakeDataset(Dataset):
+    def __init__(self, dataset_path, subset, eval, num_partial_pattern, transform=None):
+        super(MakeDataset, self).__init__()
+        self.dataset_path = dataset_path # path of dataset
+        self.subset = subset # The object which wants to train
+        self.eval = eval # you can select train, test or validation
+        self.num_partial_pattern = num_partial_pattern # number of pattern
+        self.transform = transform # I don't define prepocessing
+        self.ext = ".pcd" # the extension of point cloud data
+
+        self.comp_data = []
+        self.partial_data = []
+
+    def __len__(self):
+        return len(self.comp_data)
+
+    def __getitem__(self, index):
+        # read json file
+        read_json = open(f"{self.dataset_path}/PCN.json", "r")
+        data_list = json.load(read_json)
+
+        # get the id and index of object which wants to train(or test)
+        for i in range(len(data_list)):
+            dict_i = data_list[i]
+            taxonomy_name = dict_i["taxonomy_name"]
+            if taxonomy_name == self.subset:
+                subset_index = i
+                subset_id = dict_i["taxonomy_id"]
+                break
+
+        # make dataset path of completion point cloud.
+        '''
+        the length of completion dataset has to match with partial point cloud dataset.
+        so you need to expand the array of dataet.
+        In this case, I expand the path array of complete point cloud dataet.
+        '''
+        data_comp_list = data_list[subset_index][self.eval]
+        data_comp_list = np.array(data_comp_list, dtype=str)
+        data_comp_list = np.repeat(data_comp_list, self.num_partial_pattern)
+
+        data_comp_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "complete", subset_id)
+        data_comp_path = os.path.join(data_comp_path, data_comp_list[index]+self.ext)
+
+        # make dataset path of partial point cloud
+        data_partial_list = data_list[subset_id][self.eval]
+        partial_pattern_list = [i for i in range(self.num_partial_pattern)]
+        partial_pattern_list = np.tile(partial_pattern_list, len(data_partial_list))
+        data_partial_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "partial", subset_id)
+        data_partial_list = os.path.join(data_partial_list, partial_pattern_list[index]+self.ext)
+
+        comp_pc =
+
+        return data_comp_path
+
+if __name__ == "__main__":
+    make = MakeDataset("./data", "airplane", "test", 8)
+    print(make[16])

@@ -2,6 +2,7 @@ import torch
 import argparse
 import torch.nn as n
 from model import *
+import os
 
 # ----------------------------------------------------------------------------------------
 # get options
@@ -18,5 +19,6 @@ args = parser.parse_args()
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
-# load data
+# load data 
+dataset_path = os.path.join(os.getcwd(), "data")
 model = PCN(args.num_points, args.num_carse, args.grid_size)
