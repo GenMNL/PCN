@@ -41,7 +41,8 @@ class MakeDataset(Dataset):
         '''
         data_comp_list = data_list[subset_index][self.eval]
         data_comp_list = np.array(data_comp_list, dtype=str)
-        data_comp_list = np.repeat(data_comp_list, self.num_partial_pattern)
+        if self.num_partial_pattern != 0:
+            data_comp_list = np.repeat(data_comp_list, self.num_partial_pattern)
 
         data_comp_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "complete", subset_id)
         data_comp_path = os.path.join(data_comp_path, data_comp_list[index]+self.ext)
@@ -51,8 +52,11 @@ class MakeDataset(Dataset):
         partial_dir = data_list[subset_index][self.eval]
         data_partial_list = []
         for i in range(len(partial_dir)):
-            for j in range(self.num_partial_pattern):
-                data_partial_list.append(f"{partial_dir[i]}/0{j}")
+            if self.num_partial_pattern != 0:
+                for j in range(self.num_partial_pattern):
+                    data_partial_list.append(f"{partial_dir[i]}/0{j}")
+            else:
+                data_partial_list.append(f"{partial_dir[i]}/00")
 
         data_partial_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "partial", subset_id)
         data_partial_path = os.path.join(data_partial_path, data_partial_list[index]+self.ext)
@@ -60,17 +64,20 @@ class MakeDataset(Dataset):
         # get tensor from path
         # completion point cloud
         comp_pc = o3d.io.read_point_cloud(data_comp_path)
-        comp_pc = np.asarray(comp_pc)
+        comp_pc_visu = comp_pc
+        comp_pc = np.asarray(comp_pc.points)
         comp_pc = torch.tensor(comp_pc)
 
         # partial point cloud
         partial_pc = o3d.io.read_point_cloud(data_partial_path)
-        partial_pc = np.asarray(partial_pc)
+        partial_pc_visu = partial_pc
+        partial_pc = np.asarray(partial_pc.points)
         partial_pc = torch.tensor(partial_pc)
 
-        return comp_pc, partial_pc
+        return comp_pc, partial_pc, comp_pc_visu, partial_pc_visu
         # return data_comp_path , data_partial_path
 
 if __name__ == "__main__":
-    pc_dataset = MakeDataset("./data", "airplane", "test", 8)
-    print(pc_dataset[0])
+    pc_dataset = MakeDataset("./data", "chair", "test", 0)
+    print(pc_dataset[0][0])
+    o3d.visualization.draw_geometries([pc_dataset[7][3]])
