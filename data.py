@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset
 from torch.utils.data import dataloader
 import numpy as np
+import open3d as o3d
 import json
 import os
 
@@ -15,11 +16,8 @@ class MakeDataset(Dataset):
         self.transform = transform # I don't define prepocessing
         self.ext = ".pcd" # the extension of point cloud data
 
-        self.comp_data = []
-        self.partial_data = []
-
     def __len__(self):
-        return len(self.comp_data)
+        return len(self.len_data)
 
     def __getitem__(self, index):
         # read json file
@@ -47,6 +45,7 @@ class MakeDataset(Dataset):
 
         data_comp_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "complete", subset_id)
         data_comp_path = os.path.join(data_comp_path, data_comp_list[index]+self.ext)
+        self.len_data = data_comp_path
 
         # make dataset path of partial point cloud
         data_partial_list = data_list[subset_id][self.eval]
@@ -55,10 +54,20 @@ class MakeDataset(Dataset):
         data_partial_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "partial", subset_id)
         data_partial_list = os.path.join(data_partial_list, partial_pattern_list[index]+self.ext)
 
-        comp_pc =
+        # get tensor from path
+        # completion point cloud
+        comp_pc = o3d.io.read_point_cloud(data_comp_path)
+        comp_pc = np.asarray(comp_pc)
+        comp_pc = torch.tensor(comp_pc)
 
-        return data_comp_path
+        # partial point cloud
+        partial_pc = o3d.io.read_point_cloud(data_partial_path)
+        partial_pc = np.asarray(partial_pc)
+        partial_pc = torch.tensor(partial_pc)
+
+        return comp_pc, partial_pc
 
 if __name__ == "__main__":
-    make = MakeDataset("./data", "airplane", "test", 8)
-    print(make[16])
+    comp_pc, partial_pc = MakeDataset("./data", "airplane", "test", 8)
+    print(comp_pc[0])
+    print(partial_pc[0])
