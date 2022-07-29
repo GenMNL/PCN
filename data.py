@@ -48,11 +48,14 @@ class MakeDataset(Dataset):
         self.len_data = data_comp_path
 
         # make dataset path of partial point cloud
-        data_partial_list = data_list[subset_id][self.eval]
-        partial_pattern_list = [i for i in range(self.num_partial_pattern)]
-        partial_pattern_list = np.tile(partial_pattern_list, len(data_partial_list))
+        partial_dir = data_list[subset_index][self.eval]
+        data_partial_list = []
+        for i in range(len(partial_dir)):
+            for j in range(self.num_partial_pattern):
+                data_partial_list.append(f"{partial_dir[i]}/0{j}")
+
         data_partial_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "partial", subset_id)
-        data_partial_list = os.path.join(data_partial_list, partial_pattern_list[index]+self.ext)
+        data_partial_path = os.path.join(data_partial_path, data_partial_list[index]+self.ext)
 
         # get tensor from path
         # completion point cloud
@@ -66,8 +69,8 @@ class MakeDataset(Dataset):
         partial_pc = torch.tensor(partial_pc)
 
         return comp_pc, partial_pc
+        # return data_comp_path , data_partial_path
 
 if __name__ == "__main__":
-    comp_pc, partial_pc = MakeDataset("./data", "airplane", "test", 8)
-    print(comp_pc[0])
-    print(partial_pc[0])
+    pc_dataset = MakeDataset("./data", "airplane", "test", 8)
+    print(pc_dataset[0])
