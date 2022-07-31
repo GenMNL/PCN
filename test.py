@@ -34,25 +34,3 @@
 # if __name__ == '__main__':
 #     tensor = MakeDataset()
 #     print(tensor[0])
-
-import json
-import os
-import numpy as np
-
-par_path = [i for i in range(8)]
-par_path = np.array(par_path, dtype=str)
-# path_list = []
-# for j in range(len(par_path)):
-#     for i in range(10, 18):
-#         path_list.append(f"{par_path[j]}/{i}")
-
-# print(path_list)
-
-hoge = [f'{par_path[j]}/{i}' for j in range(len(par_path)) for i in range(10, 18)]
-print(hoge)
-
-for j in range(len(par_path)):
-    for i in range(10, 18):
-        par_path[j] = par_path[j]+f'/0{i}'
-
-print(par_path)

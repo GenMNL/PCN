@@ -17,39 +17,37 @@ class MakeDataset(Dataset):
         self.ext = ".pcd" # the extension of point cloud data
 
     def __len__(self):
-        return len(self.len_data)
+        subset_index, subset_id = self.get_item_from_json()
+        data_comp_list = self.data_list[subset_index][self.eval]
+        data_comp_list = np.array(data_comp_list, dtype=str)
+
+        if self.num_partial_pattern != 0: # when there are some patterns of partial data, repeat array.
+            data_comp_list = np.repeat(data_comp_list, self.num_partial_pattern)
+        len_data = len(data_comp_list) # make instance variable for count length of data.
+
+        return len_data
 
     def __getitem__(self, index):
-        # read json file
-        read_json = open(f"{self.dataset_path}/PCN.json", "r")
-        data_list = json.load(read_json)
+        subset_index, subset_id = self.get_item_from_json()
 
-        # get the id and index of object which wants to train(or test)
-        for i in range(len(data_list)):
-            dict_i = data_list[i]
-            taxonomy_name = dict_i["taxonomy_name"]
-            if taxonomy_name == self.subset:
-                subset_index = i
-                subset_id = dict_i["taxonomy_id"]
-                break
-
+        # ///
         # make dataset path of completion point cloud.
         '''
         the length of completion dataset has to match with partial point cloud dataset.
         so you need to expand the array of dataet.
         In this case, I expand the path array of complete point cloud dataet.
         '''
-        data_comp_list = data_list[subset_index][self.eval]
+        data_comp_list = self.data_list[subset_index][self.eval]
         data_comp_list = np.array(data_comp_list, dtype=str)
-        if self.num_partial_pattern != 0:
+
+        if self.num_partial_pattern != 0: # when there are some patterns of partial data, repeat array.
             data_comp_list = np.repeat(data_comp_list, self.num_partial_pattern)
 
         data_comp_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "complete", subset_id)
         data_comp_path = os.path.join(data_comp_path, data_comp_list[index]+self.ext)
-        self.len_data = data_comp_path
 
         # make dataset path of partial point cloud
-        partial_dir = data_list[subset_index][self.eval]
+        partial_dir = self.data_list[subset_index][self.eval]
         data_partial_list = []
         for i in range(len(partial_dir)):
             if self.num_partial_pattern != 0:
@@ -61,23 +59,43 @@ class MakeDataset(Dataset):
         data_partial_path = os.path.join(self.dataset_path, "ShapeNetCompletion", self.eval, "partial", subset_id)
         data_partial_path = os.path.join(data_partial_path, data_partial_list[index]+self.ext)
 
+        # ///
         # get tensor from path
         # completion point cloud
-        comp_pc = o3d.io.read_point_cloud(data_comp_path)
-        comp_pc_visu = comp_pc
-        comp_pc = np.asarray(comp_pc.points)
-        comp_pc = torch.tensor(comp_pc)
+        # comp_pc = o3d.io.read_point_cloud(data_comp_path)
+        # comp_pc_visu = comp_pc # if you want to visualize data, input this to open3d.visualization
+        # comp_pc = np.asarray(comp_pc.points)
+        # comp_pc = torch.tensor(comp_pc)
 
         # partial point cloud
-        partial_pc = o3d.io.read_point_cloud(data_partial_path)
-        partial_pc_visu = partial_pc
-        partial_pc = np.asarray(partial_pc.points)
-        partial_pc = torch.tensor(partial_pc)
+        # partial_pc = o3d.io.read_point_cloud(data_partial_path)
+        # partial_pc_visu = partial_pc # if you want to visualize data, input this to open3d.visualization
+        # partial_pc = np.asarray(partial_pc.points)
+        # partial_pc = torch.tensor(partial_pc)
 
-        return comp_pc, partial_pc, comp_pc_visu, partial_pc_visu
-        # return data_comp_path , data_partial_path
+        # return comp_pc, partial_pc, comp_pc_visu, partial_pc_visu
+        return data_comp_path , data_partial_path
+
+    def get_item_from_json(self):
+        # read json file
+        read_json = open(f"{self.dataset_path}/PCN.json", "r")
+        self.data_list = json.load(read_json)
+
+        # get the id and index of object which wants to train(or test)
+        for i in range(len(self.data_list)):
+            dict_i = self.data_list[i]
+            taxonomy_name = dict_i["taxonomy_name"]
+            if taxonomy_name == self.subset:
+                subset_index = i
+                subset_id = dict_i["taxonomy_id"]
+                break
+
+        return subset_index, subset_id
 
 if __name__ == "__main__":
-    pc_dataset = MakeDataset("./data", "chair", "test", 0)
-    print(pc_dataset[0][0])
-    o3d.visualization.draw_geometries([pc_dataset[7][3]])
+    pc_dataset = MakeDataset("./data", "chair", "train", 0)
+    i = 149
+    print(len(pc_dataset))
+    print(pc_dataset[i][0])
+    print(pc_dataset[i][1])
+    # o3d.visualization.draw_geometries([pc_dataset[7][3]])
