@@ -11,7 +11,7 @@ import os
 # ----------------------------------------------------------------------------------------
 # get options
 parser = argparse.ArgumentParser(description="Point Completion Network")
-parser.add_argument("--num_points", default=1024)
+parser.add_argument("--num_points", default=2048)
 parser.add_argument("--emb_dim", default=1024)
 parser.add_argument("--num_coarse", default=1024)
 parser.add_argument("--grid_size", default=4)

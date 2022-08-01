@@ -23,11 +23,11 @@ class PointNet(nn.Module):
         )
         # MaxPool1 use for getting global feature
         self.MaxPool1 = nn.Sequential(
-            MaxPooling(256, self.num_points)
+            MaxPooling(256, self.num_points) # self.num_points is used for view of tensor
         )
         # MaxPool2 use for getting encoder result
         self.MaxPool2 = nn.Sequential(
-            MaxPooling(self.emb_dim, self.num_points)
+            MaxPooling(self.emb_dim, self.num_points) # self.num_points is used for view of tensor
         )
 
 
@@ -52,7 +52,7 @@ class PointNet(nn.Module):
 # ----------------------------------------------------------------------------------------
 # test
 if __name__ == "__main__":
-    input = torch.randn(10, 2000, 3) # (bachsize, num_point, channnel)
-    pointnet= PointNet(2000, 1024) # 2000 is num of points
+    input = torch.randn(10, 2048, 3) # (bachsize, num_point, channnel)
+    pointnet= PointNet(2048, 1024) # 2000 is num of points
     test_coarse_output = pointnet(input)
     print(test_coarse_output.shape)
