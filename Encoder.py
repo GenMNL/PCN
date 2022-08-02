@@ -6,10 +6,11 @@ from module import *
 # ----------------------------------------------------------------------------------------
 # PCN uses PointNet for encoder 
 class PointNet(nn.Module):
-    def __init__(self, num_points, emb_dim):
+    def __init__(self, num_points, emb_dim, device):
         super(PointNet, self).__init__()
         self.num_points = num_points
         self.emb_dim = emb_dim
+        self.device = device
 
         # MLP1 use for getting point feature
         self.MLP1 = nn.Sequential(

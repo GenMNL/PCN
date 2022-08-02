@@ -5,15 +5,16 @@ import Decoder
 
 # ----------------------------------------------------------------------------------------
 class PCN(nn.Module):
-    def __init__(self, num_points, emb_dim, num_coarse, grid_size):
+    def __init__(self, num_points, emb_dim, num_coarse, grid_size, device):
         super(PCN, self).__init__()
         self.num_points = num_points
         self.emb_dim = emb_dim
         self.num_coarse = num_coarse
         self.grid_size = grid_size
-        self.Encoder = Encoder.PointNet(num_points=self.num_points, emb_dim=self.emb_dim)
-        self.Decoder_coarse= Decoder.AffineDecoder(num_coarse=self.num_coarse, emb_dim=self.emb_dim)
-        self.Decoder_fine = Decoder.FineDecoder(grid_size=self.grid_size, num_coarse=self.num_coarse, emb_dim=self.emb_dim)
+        self.device = device
+        self.Encoder = Encoder.PointNet(num_points=self.num_points, emb_dim=self.emb_dim, device=self.device)
+        self.Decoder_coarse= Decoder.AffineDecoder(num_coarse=self.num_coarse, emb_dim=self.emb_dim, device=self.device)
+        self.Decoder_fine = Decoder.FineDecoder(grid_size=self.grid_size, num_coarse=self.num_coarse, emb_dim=self.emb_dim, device=self.device)
 
     def forward(self, input_data):
         feature_v = self.Encoder(input_data)

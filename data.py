@@ -65,13 +65,13 @@ class MakeDataset(Dataset):
         comp_pc = o3d.io.read_point_cloud(data_comp_path)
         comp_pc_visu = comp_pc # if you want to visualize data, input this to open3d.visualization
         comp_pc = np.asarray(comp_pc.points)
-        comp_pc = torch.tensor(comp_pc)
+        comp_pc = torch.tensor(comp_pc, dtype=torch.float)
 
         # partial point cloud
         partial_pc = o3d.io.read_point_cloud(data_partial_path)
         partial_pc_visu = partial_pc # if you want to visualize data, input this to open3d.visualization
         partial_pc = np.asarray(partial_pc.points)
-        partial_pc = torch.tensor(partial_pc)
+        partial_pc = torch.tensor(partial_pc, dtype=torch.float)
 
         return comp_pc, partial_pc
         # return comp_pc, partial_pc, comp_pc_visu, partial_pc_visu # use this if you want to visualize point cloud
@@ -93,58 +93,13 @@ class MakeDataset(Dataset):
 
         return subset_index, subset_id
 
-class MakeDataloader(MakeDataset):
-    def __init__(self, dataset_path, subset, eval, num_partial_pattern, transform,
-                 batch_size, shuffle, drop_last):
-        # for dataset 
-        super().__init__(dataset_path, subset, eval, num_partial_pattern, transform)
-        # for dataloader
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.drop_last = drop_last
-
-    def original_collate(self, batch_list):
-        # get batch size
-        batch_size = np.array(batch_list).shape[0]
-
-        # translate complete list to tensor.
-        comp_batch, partial_batch = list(zip(*batch_list))
-        comp_batch = torch.stack(comp_batch, dim=0)
-
-        # count the minimum points number in batch
-        min_num_points = 100000
-        for i in range(batch_size):
-            # get num of points in each tensor of batch.
-            num_points = np.array(partial_batch[i]).shape[0] # num of points
-            if min_num_points > num_points:
-                min_num_points = num_points
-
-        # make the number of points in batch the same.
-        partial_batch = list(partial_batch) # [batch_size, num_points, channel(x, y, z)]
-        for i in range(batch_size):
-            num_points_index = np.array(partial_batch[i]).shape[0] # num of points
-            # print(f"num = {num_points_index}")
-            num_points_index = np.arange(num_points_index)
-            # print(f"array ={num_points_index}")
-            num_points_index = np.random.permutation(num_points_index) 
-            print(f"random = {num_points_index}")
-            partial_batch[i] = partial_batch[i][num_points_index[0:min_num_points],:]
-        partial_batch = torch.stack(partial_batch, dim=0)
-
-        return comp_batch, partial_batch
 
 if __name__ == "__main__":
-    pc_dataset = MakeDataset("./data/ShapeNetCompletion", "chair", "train", 8)
+    pc_dataset = MakeDataset("./data/ShapeNetCompletion", "chair", "val", 0)
     # i = 46000
     i = 1
     print(len(pc_dataset))
     print(pc_dataset[i][0].size())
     print(pc_dataset[i][1].size())
-    min = 10000
-    for i in range(4600):
-        num_point = pc_dataset[i][1].size()[0]
-        if min > num_point:
-            min = num_point
-    print(min)
 
     # o3d.visualization.draw_geometries([pc_dataset[7][3]])
