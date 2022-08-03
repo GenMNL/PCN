@@ -91,7 +91,8 @@ train_dataset = MakeDataset(
     dataset_path=data_dir,
     subset=args.subset,
     eval="train",
-    num_partial_pattern=8
+    num_partial_pattern=0,
+    device=args.device
 )
 train_dataloader = DataLoader(
     dataset=train_dataset,
@@ -107,7 +108,8 @@ val_dataset = MakeDataset(
     dataset_path=data_dir,
     subset=args.subset,
     eval="val",
-    num_partial_pattern=0
+    num_partial_pattern=0,
+    device=args.device
 )
 val_dataloader = DataLoader(
     dataset=val_dataset,
@@ -130,8 +132,8 @@ def train_one_epoch(device, model, dataloader, alpha, optim):
     count = 0
 
     for i, points in enumerate(tqdm(dataloader)):
-        comp = points[0].to(device)
-        partial = points[1].to(device)
+        comp = points[0]
+        partial = points[1]
         # prediction
         feature_v, coarse, fine = model(partial)
         # get chamfer distance loss
@@ -156,8 +158,8 @@ def val_one_epoch(device, model, dataloader):
     count = 0
 
     for i, points in enumerate(dataloader):
-        comp = points[0].to(device)
-        partial = points[1].to(device)
+        comp = points[0]
+        partial = points[1]
         # prediction
         feature_v, coarse, fine = model(partial)
         # get chamfer distance loss

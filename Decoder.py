@@ -48,7 +48,7 @@ class FineDecoder(nn.Module):
         self.batchsize = coarse_output.shape[0]
 
         # make grid tensor
-        grid_node = torch.linspace(-0.5, 0.5, steps=self.grid_size).to(self.device)
+        grid_node = torch.linspace(-0.5, 0.5, steps=self.grid_size, device=self.device)
         grid = torch.meshgrid(grid_node, grid_node) # This is tuple object which contains x and y coordinates
         grid = torch.stack(grid, dim=2) # concatenate grid_x and grid_y in the direction of axis=2
         grid = grid.view(-1, 2) # make one of grid feature vector
@@ -57,15 +57,15 @@ class FineDecoder(nn.Module):
         grid_feature = grid_feature.repeat(self.batchsize, 1, 1)
 
         # expand coarse output tensor
-        x = coarse_output.repeat(1, 1, self.grid_size**2).to(self.device)
+        x = coarse_output.repeat(1, 1, self.grid_size**2)
         coarse_feature = x.view(self.batchsize, self.num_coarse*(self.grid_size**2), -1)
 
         # expand global feature tensor
-        global_feature = torch.unsqueeze(global_feature, dim=1).to(self.device)
+        global_feature = torch.unsqueeze(global_feature, dim=1)
         global_feature = global_feature.repeat(1, self.num_coarse*(self.grid_size**2), 1)
 
         # concatenate all feature tensors
-        features = torch.cat([global_feature, grid_feature, coarse_feature], dim=2).to(self.device)
+        features = torch.cat([global_feature, grid_feature, coarse_feature], dim=2)
 
         # adapt layer to features
         features = features.permute(0, 2, 1)

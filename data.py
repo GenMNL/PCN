@@ -7,12 +7,13 @@ import json
 import os
 
 class MakeDataset(Dataset):
-    def __init__(self, dataset_path, subset, eval, num_partial_pattern, transform=None):
+    def __init__(self, dataset_path, subset, eval, num_partial_pattern, device, transform=None):
         super(MakeDataset, self).__init__()
         self.dataset_path = dataset_path # path of dataset
         self.subset = subset # The object which wants to train
         self.eval = eval # you can select train, test or validation
         self.num_partial_pattern = num_partial_pattern # number of pattern
+        self.device = device
         self.transform = transform # I don't define prepocessing
         self.ext = ".pcd" # the extension of point cloud data
 
@@ -65,13 +66,13 @@ class MakeDataset(Dataset):
         comp_pc = o3d.io.read_point_cloud(data_comp_path)
         comp_pc_visu = comp_pc # if you want to visualize data, input this to open3d.visualization
         comp_pc = np.asarray(comp_pc.points)
-        comp_pc = torch.tensor(comp_pc, dtype=torch.float)
+        comp_pc = torch.tensor(comp_pc, dtype=torch.float, device=self.device)
 
         # partial point cloud
         partial_pc = o3d.io.read_point_cloud(data_partial_path)
         partial_pc_visu = partial_pc # if you want to visualize data, input this to open3d.visualization
         partial_pc = np.asarray(partial_pc.points)
-        partial_pc = torch.tensor(partial_pc, dtype=torch.float)
+        partial_pc = torch.tensor(partial_pc, dtype=torch.float, device=self.device)
 
         return comp_pc, partial_pc
         # return comp_pc, partial_pc, comp_pc_visu, partial_pc_visu # use this if you want to visualize point cloud
