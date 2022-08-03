@@ -42,6 +42,15 @@ class MaxPooling(nn.Module):
 # ----------------------------------------------------------------------------------------
 # test
 if __name__ == "__main__":
-    input = torch.randn(10, 2000, 3)
+    input = torch.randn(10, 3, 2000, device="cuda")
+
+    # conv = Conv_ReLU(3, 128).to('cuda')
     conv = Conv_ReLU(3, 128)
-    out = conv(input)
+    out_conv = conv(input)
+
+    # MaxPool = MaxPooling(3, 2000).to("cuda")
+    MaxPool = MaxPooling(3, 2000)
+    out_mp = MaxPool(input)
+
+    print(out_mp.device)
+    print(out_conv.device)

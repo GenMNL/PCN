@@ -21,7 +21,7 @@ parser.add_argument("--epochs", default=200)
 parser.add_argument("--optimaizer", default="Adam", help="if you want to choose other optimization, you must change the code.")
 parser.add_argument("--lr", default=1e-4, help="learning rate")
 parser.add_argument("--dataset_dir", default="./data/ShapeNetCompletion")
-parser.add_argument("--save_path", default="./checkpoint")
+parser.add_argument("--save_dir", default="./checkpoint")
 parser.add_argument("--subset", default="chair")
 parser.add_argument("--device", default="cuda")
 args = parser.parse_args()
@@ -29,33 +29,6 @@ args = parser.parse_args()
 
 # ----------------------------------------------------------------------------------------
 # make collate function for dataloader
-def original_collate(batch_list):
-    # get batch size
-    batch_size = np.array(batch_list).shape[0]
-
-    # translate complete list to tensor.
-    comp_batch, partial_batch = list(zip(*batch_list))
-    comp_batch = torch.stack(comp_batch, dim=0)
-
-    # count the minimum points number in batch
-    min_num_points = 100000
-    for i in range(batch_size):
-        # get num of points in each tensor of batch.
-        num_points = np.array(partial_batch[i]).shape[0] # num of points
-        if min_num_points > num_points:
-            min_num_points = num_points
-
-    # make the number of points in batch the same.
-    partial_batch = list(partial_batch) # [batch_size, num_points, channel(x, y, z)]
-    for i in range(batch_size):
-        num_points_index = np.array(partial_batch[i]).shape[0] # num of points
-        num_points_index = np.arange(num_points_index)
-        num_points_index = np.random.permutation(num_points_index) 
-        partial_batch[i] = partial_batch[i][num_points_index[0:min_num_points],:]
-    partial_batch = torch.stack(partial_batch, dim=0)
-
-    return comp_batch, partial_batch
-
 class OriginalCollate():
     def __init__(self, num_points):
         self.num_points = num_points
@@ -63,7 +36,6 @@ class OriginalCollate():
 
     def __call__(self, batch_list):
         # get batch size
-        # batch_size = np.array(batch_list).shape[0]
         batch_size = len(batch_list)
 
         # transform tuple of complete point cloud to tensor
@@ -114,7 +86,7 @@ val_dataset = MakeDataset(
 )
 val_dataloader = DataLoader(
     dataset=val_dataset,
-    batch_size=args.batch_size,
+    batch_size=10,
     shuffle=True,
     drop_last=True,
     collate_fn=OriginalCollate(args.num_points)

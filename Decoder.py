@@ -80,11 +80,10 @@ class FineDecoder(nn.Module):
 # ----------------------------------------------------------------------------------------
 # test
 if __name__ == "__main__":
-    input = torch.randn(10, 1024) # (batchsize, dim of feature vector)
-    affine_decoder = AffineDecoder(num_coarse=1024, emb_dim=1024) # 1024 is the number of coarse point clouds.
+    input = torch.randn(10, 1024, device="cuda") # (batchsize, dim of feature vector)
+    affine_decoder = AffineDecoder(num_coarse=1024, emb_dim=1024, device="cuda").to("cuda") # 1024 is the number of coarse point clouds.
     coarse_output = affine_decoder(input)
 
-    fine_decoder = FineDecoder(4, num_coarse=1024, emb_dim=1024)
+    fine_decoder = FineDecoder(4, num_coarse=1024, emb_dim=1024, device="cuda").to('cuda')
     fine_output = fine_decoder(coarse_output, input)
-    print(fine_output.shape)
 # ----------------------------------------------------------------------------------------

@@ -53,7 +53,7 @@ class PointNet(nn.Module):
 # ----------------------------------------------------------------------------------------
 # test
 if __name__ == "__main__":
-    input = torch.randn(10, 2048, 3) # (bachsize, num_point, channnel)
-    pointnet= PointNet(2048, 1024) # 2000 is num of points
+    input = torch.randn(1, 200, 3, device="cuda") # (bachsize, num_point, channnel)
+    pointnet= PointNet(200, 1024, "cuda").to("cuda") # 2000 is num of points
     test_coarse_output = pointnet(input)
-    print(test_coarse_output.shape)
+    print(test_coarse_output.device)
