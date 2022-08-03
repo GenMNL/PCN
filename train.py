@@ -16,7 +16,7 @@ parser.add_argument("--num_points", default=2048)
 parser.add_argument("--emb_dim", default=1024)
 parser.add_argument("--num_coarse", default=1024)
 parser.add_argument("--grid_size", default=4)
-parser.add_argument("-b", "--batch_size", default=34)
+parser.add_argument("--batch_size", default=60)
 parser.add_argument("--epochs", default=200)
 parser.add_argument("--optimaizer", default="Adam", help="if you want to choose other optimization, you must change the code.")
 parser.add_argument("--lr", default=1e-4, help="learning rate")
@@ -70,7 +70,7 @@ train_dataset = MakeDataset(
 train_dataloader = DataLoader(
     dataset=train_dataset,
     batch_size=args.batch_size,
-    # num_workers=3,
+    num_workers=3,
     shuffle=True,
     drop_last=True,
     collate_fn=OriginalCollate(args.num_points)
@@ -87,6 +87,7 @@ val_dataset = MakeDataset(
 val_dataloader = DataLoader(
     dataset=val_dataset,
     batch_size=10,
+    num_workers=3,
     shuffle=True,
     drop_last=True,
     collate_fn=OriginalCollate(args.num_points)
@@ -148,49 +149,51 @@ def val_one_epoch(device, model, dataloader):
 
 # ----------------------------------------------------------------------------------------
 # main loop
-model = PCN(args.num_points, args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
-if args.optimaizer == "Adam":
-    optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=[0.9, 0.999])
-lr_schdual = torch.optim.lr_scheduler.StepLR(optim, step_size=50, gamma=0.7)
-writter = SummaryWriter()
+if __name__ == "__main__":
+    freeze_support()
+    model = PCN(args.num_points, args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
+    if args.optimaizer == "Adam":
+        optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=[0.9, 0.999])
+    lr_schdual = torch.optim.lr_scheduler.StepLR(optim, step_size=50, gamma=0.7)
+    writter = SummaryWriter()
 
-best_loss = np.inf
-for epoch in tqdm(range(1, args.epochs+1)):
+    best_loss = np.inf
+    for epoch in tqdm(range(1, args.epochs+1)):
 
-    # determin the ration of loss
-    if epoch < 50:
-        alpha = 0.01
-    elif epoch < 100:
-        alpha = 0.1
-    elif epoch < 150:
-        alpha = 0.5
-    else:
-        alpha = 1.0
-    # get loss of one epoch
-    train_loss = train_one_epoch(args.device, model, train_dataloader, alpha, optim)
-    val_loss = val_one_epoch(args.device, model, val_dataloader)
-    writter.add_scalar("train_loss", train_loss, epoch)
-    writter.add_scalar("validation_loss", val_loss, epoch)
+        # determin the ration of loss
+        if epoch < 50:
+            alpha = 0.01
+        elif epoch < 100:
+            alpha = 0.1
+        elif epoch < 150:
+            alpha = 0.5
+        else:
+            alpha = 1.0
+        # get loss of one epoch
+        train_loss = train_one_epoch(args.device, model, train_dataloader, alpha, optim)
+        val_loss = val_one_epoch(args.device, model, val_dataloader)
+        writter.add_scalar("train_loss", train_loss, epoch)
+        writter.add_scalar("validation_loss", val_loss, epoch)
 
-    # if val loss is better than best loss, update best loss to val loss
-    if val_loss < best_loss:
-        best_loss = val_loss
-        bl_path = os.path.join(args.save_dir, "best_weight.pth")
+        # if val loss is better than best loss, update best loss to val loss
+        if val_loss < best_loss:
+            best_loss = val_loss
+            bl_path = os.path.join(args.save_dir, "best_weight.pth")
+            torch.save({
+                        'epoch':epoch,
+                        'model_state_dict':model.state_dict(), 
+                        'optimizer_state_dict':optim.state_dict(),
+                        'loss':best_loss
+                        }, bl_path)
+        # save normal weight 
+        nl_path = os.path.join(args.save_dir, "normal_weight.pth")
         torch.save({
                     'epoch':epoch,
-                    'model_state_dict':model.state_dict(), 
+                    'model_state_dict':model.state_dict(),
                     'optimizer_state_dict':optim.state_dict(),
-                    'loss':best_loss
-                    }, bl_path)
-    # save normal weight 
-    nl_path = os.path.join(args.save_dir, "normal_weight.pth")
-    torch.save({
-                'epoch':epoch,
-                'model_state_dict':model.state_dict(),
-                'optimizer_state_dict':optim.state_dict(),
-                'loss':val_loss
-                }, nl_path)
-    lr_schdual.step()
+                    'loss':val_loss
+                    }, nl_path)
+        lr_schdual.step()
 
-# close writter
-writter.close()
+    # close writter
+    writter.close()
