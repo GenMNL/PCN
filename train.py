@@ -1,6 +1,7 @@
 import torch
 import torch.nn as n
 from torch.utils.data import DataLoader
+import torch.multiprocessing as multiprocessing
 from tensorboardX import SummaryWriter
 from pytorch3d.loss import chamfer_distance
 import argparse
@@ -8,6 +9,7 @@ from tqdm import tqdm
 from model import *
 from data import *
 import os
+import multiprocessing as mp
 
 # ----------------------------------------------------------------------------------------
 # get options
@@ -59,6 +61,10 @@ class OriginalCollate():
 
 # load data 
 # train data
+if multiprocessing.get_start_method() == 'fork':
+    multiprocessing.set_start_method('spawn', force=True)
+    print("{} setup done".format(multiprocessing.get_start_method()))
+
 data_dir = os.path.join(args.dataset_dir)
 train_dataset = MakeDataset(
     dataset_path=data_dir,
@@ -70,7 +76,7 @@ train_dataset = MakeDataset(
 train_dataloader = DataLoader(
     dataset=train_dataset,
     batch_size=args.batch_size,
-    num_workers=3,
+    num_workers=2,
     shuffle=True,
     drop_last=True,
     collate_fn=OriginalCollate(args.num_points)
@@ -87,7 +93,7 @@ val_dataset = MakeDataset(
 val_dataloader = DataLoader(
     dataset=val_dataset,
     batch_size=10,
-    num_workers=3,
+    num_workers=2,
     shuffle=True,
     drop_last=True,
     collate_fn=OriginalCollate(args.num_points)
@@ -150,7 +156,7 @@ def val_one_epoch(device, model, dataloader):
 # ----------------------------------------------------------------------------------------
 # main loop
 if __name__ == "__main__":
-    freeze_support()
+    mp.freeze_support()
     model = PCN(args.num_points, args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
     if args.optimaizer == "Adam":
         optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=[0.9, 0.999])
