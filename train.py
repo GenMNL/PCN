@@ -16,7 +16,7 @@ parser.add_argument("--num_points", default=2048)
 parser.add_argument("--emb_dim", default=1024)
 parser.add_argument("--num_coarse", default=1024)
 parser.add_argument("--grid_size", default=4)
-parser.add_argument("-b", "--batch_size", default=32)
+parser.add_argument("-b", "--batch_size", default=34)
 parser.add_argument("--epochs", default=200)
 parser.add_argument("--optimaizer", default="Adam", help="if you want to choose other optimization, you must change the code.")
 parser.add_argument("--lr", default=1e-4, help="learning rate")
@@ -63,23 +63,24 @@ class OriginalCollate():
 
     def __call__(self, batch_list):
         # get batch size
-        batch_size = np.array(batch_list).shape[0]
+        # batch_size = np.array(batch_list).shape[0]
+        batch_size = len(batch_list)
 
         # transform tuple of complete point cloud to tensor
         comp_batch, partial_batch = list(zip(*batch_list))
-        comp_batch = torch.stack(comp_batch, dim=0)
+        comp_batch = torch.stack(comp_batch, dim=0).to(args.device)
 
         # transform tuple of partial point cloud to tensor
         partial_batch = list(partial_batch)
         for i in range(batch_size):
-            n = np.array(partial_batch[i]).shape[0]
+            n = len(partial_batch[i])
             idx = np.random.permutation(n)
             if len(idx) < self.num_points:
                 temp = np.random.randint(0, n, size=(self.num_points - n))
                 idx = np.concatenate([idx, temp])
             partial_batch[i] = partial_batch[i][idx[:self.num_points], :]
 
-        partial_batch = torch.stack(partial_batch, dim=0)
+        partial_batch = torch.stack(partial_batch, dim=0).to(args.device)
 
         return comp_batch, partial_batch
 
