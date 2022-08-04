@@ -1,6 +1,7 @@
 # dataset
 *.pcd
 *.h5
+*.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
