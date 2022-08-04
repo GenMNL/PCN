@@ -18,7 +18,7 @@ parser.add_argument("--num_points", default=2048)
 parser.add_argument("--emb_dim", default=1024)
 parser.add_argument("--num_coarse", default=1024)
 parser.add_argument("--grid_size", default=4)
-parser.add_argument("--batch_size", default=60)
+parser.add_argument("--batch_size", default=34)
 parser.add_argument("--epochs", default=200)
 parser.add_argument("--optimaizer", default="Adam", help="if you want to choose other optimization, you must change the code.")
 parser.add_argument("--lr", default=1e-4, help="learning rate")
@@ -58,12 +58,8 @@ class OriginalCollate():
 
         return comp_batch, partial_batch
 
-
 # load data 
 # train data
-if multiprocessing.get_start_method() == 'fork':
-    multiprocessing.set_start_method('spawn', force=True)
-    print("{} setup done".format(multiprocessing.get_start_method()))
 
 data_dir = os.path.join(args.dataset_dir)
 train_dataset = MakeDataset(
