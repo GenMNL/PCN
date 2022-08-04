@@ -1,7 +1,6 @@
 import torch
 import torch.nn as n
 from torch.utils.data import DataLoader
-import torch.multiprocessing as multiprocessing
 from tensorboardX import SummaryWriter
 from pytorch3d.loss import chamfer_distance
 import argparse
@@ -9,7 +8,6 @@ from tqdm import tqdm
 from model import *
 from data import *
 import os
-import multiprocessing as mp
 
 # ----------------------------------------------------------------------------------------
 # get options
@@ -72,7 +70,6 @@ train_dataset = MakeDataset(
 train_dataloader = DataLoader(
     dataset=train_dataset,
     batch_size=args.batch_size,
-    num_workers=2,
     shuffle=True,
     drop_last=True,
     collate_fn=OriginalCollate(args.num_points)
@@ -88,8 +85,7 @@ val_dataset = MakeDataset(
 )
 val_dataloader = DataLoader(
     dataset=val_dataset,
-    batch_size=10,
-    num_workers=2,
+    batch_size=20,
     shuffle=True,
     drop_last=True,
     collate_fn=OriginalCollate(args.num_points)
@@ -107,7 +103,7 @@ def train_one_epoch(device, model, dataloader, alpha, optim):
     train_loss = 0.0
     count = 0
 
-    for i, points in enumerate(tqdm(dataloader)):
+    for i, points in enumerate(tqdm(dataloader, desc="train")):
         comp = points[0]
         partial = points[1]
         # prediction
@@ -130,19 +126,20 @@ def train_one_epoch(device, model, dataloader, alpha, optim):
 
 def val_one_epoch(device, model, dataloader):
     model.eval()
-    val_loss = np.inf
+    val_loss = 0.0
     count = 0
 
-    for i, points in enumerate(dataloader):
-        comp = points[0]
-        partial = points[1]
-        # prediction
-        feature_v, coarse, fine = model(partial)
-        # get chamfer distance loss
-        CD_loss = chamfer_distance(fine, comp)
+    with torch.no_grad():
+        for i, points in enumerate(tqdm(dataloader, desc="validation")):
+            comp = points[0]
+            partial = points[1]
+            # prediction
+            feature_v, coarse, fine = model(partial)
+            # get chamfer distance loss
+            CD_loss = chamfer_distance(fine, comp)
 
-        val_loss += CD_loss[0]
-        count += 1
+            val_loss += CD_loss[0]
+            count += 1
 
     val_loss = float(val_loss)/count
     return val_loss
@@ -152,7 +149,6 @@ def val_one_epoch(device, model, dataloader):
 # ----------------------------------------------------------------------------------------
 # main loop
 if __name__ == "__main__":
-    mp.freeze_support()
     model = PCN(args.num_points, args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
     if args.optimaizer == "Adam":
         optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=[0.9, 0.999])
@@ -160,7 +156,7 @@ if __name__ == "__main__":
     writter = SummaryWriter()
 
     best_loss = np.inf
-    for epoch in tqdm(range(1, args.epochs+1)):
+    for epoch in tqdm(range(1, args.epochs+1), desc="main loop"):
 
         # determin the ration of loss
         if epoch < 50:

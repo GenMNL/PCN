@@ -100,7 +100,5 @@ if __name__ == "__main__":
     # i = 46000
     i = 1
     print(len(pc_dataset))
-    print(pc_dataset[i][0].size())
-    print(pc_dataset[i][1].size())
 
     # o3d.visualization.draw_geometries([pc_dataset[7][3]])
