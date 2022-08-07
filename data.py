@@ -96,7 +96,7 @@ class MakeDataset(Dataset):
 
 
 if __name__ == "__main__":
-    pc_dataset = MakeDataset("./data/ShapeNetCompletion", "chair", "val", 0)
+    pc_dataset = MakeDataset("./data/ShapeNetCompletion", "chair", "train", 0, "cuda")
     # i = 46000
     i = 1
     print(len(pc_dataset))
