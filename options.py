@@ -21,5 +21,6 @@ def make_parser():
     # make parser for test
     parser.add_argument("--result_dir", default="./result")
     parser.add_argument("--select_result", default="best") # you can select best or normal
+    parser.add_argument("--result_subset", default="chair")
     return parser
 # ----------------------------------------------------------------------------------------

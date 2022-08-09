@@ -188,7 +188,7 @@ if __name__ == "__main__":
         # if val loss is better than best loss, update best loss to val loss
         if val_loss < best_loss:
             best_loss = val_loss
-            bl_path = os.path.join(args.save_dir, "best_weight.pth")
+            bl_path = os.path.join(args.save_dir, args.subset, "best_weight.tar")
             torch.save({
                         'epoch':epoch,
                         'model_state_dict':model.state_dict(), 
@@ -196,7 +196,7 @@ if __name__ == "__main__":
                         'loss':best_loss
                         }, bl_path)
         # save normal weight 
-        nl_path = os.path.join(args.save_dir, "normal_weight.pth")
+        nl_path = os.path.join(args.save_dir, args.subset, "normal_weight.tar")
         torch.save({
                     'epoch':epoch,
                     'model_state_dict':model.state_dict(),

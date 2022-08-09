@@ -86,4 +86,5 @@ if __name__ == "__main__":
 
     fine_decoder = FineDecoder(4, num_coarse=1024, emb_dim=1024, device="cuda").to('cuda')
     fine_output = fine_decoder(coarse_output, input)
+    print(fine_output.shape)
 # ----------------------------------------------------------------------------------------
