@@ -1,7 +1,11 @@
+# My original
 # dataset
 *.pcd
 *.h5
 *.pth
+# result
+result/
+runs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
