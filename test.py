@@ -59,7 +59,6 @@ def test(device, model, dataloader, len_dataset, save_dir):
 
     feature_df = pd.DataFrame(np.zeros((len_dataset, args.emb_dim)), index=np.arange(1, len_dataset+1),
                               columns=np.arange(1, args.emb_dim+1))
-    print(feature_df.shape)
     with torch.no_grad():
         for i, points in enumerate(dataloader):
             comp = points[0]
@@ -69,7 +68,7 @@ def test(device, model, dataloader, len_dataset, save_dir):
 
             feature_v = feature_v.detach().cpu().numpy()
             feature_v = feature_v.reshape(args.emb_dim)
-            feature_df.loc[i] = feature_v
+            feature_df.loc[i+1,:] = feature_v
 
             comp = comp.detach().cpu().numpy()
             comp = comp.reshape(args.num_coarse*(args.grid_size**2), -1)
@@ -79,10 +78,10 @@ def test(device, model, dataloader, len_dataset, save_dir):
             partial = partial.reshape(args.num_points, -1)
             coarse = coarse.detach().cpu().numpy()
             coarse = coarse.reshape(args.num_coarse, -1)
-            export_ply(save_dir, i, "comp", comp) # save point cloud of comp
-            export_ply(save_dir, i, "partial", partial) # save point cloud of partial
-            export_ply(save_dir, i, "fine", fine) # save point cloud of fine
-            export_ply(save_dir, i, "coarse", coarse) # save point cloud of coarse
+            export_ply(save_dir, i+1, "comp", comp) # save point cloud of comp
+            export_ply(save_dir, i+1, "partial", partial) # save point cloud of partial
+            export_ply(save_dir, i+1, "fine", fine) # save point cloud of fine
+            export_ply(save_dir, i+1, "coarse", coarse) # save point cloud of coarse
 
     feature_path = os.path.join(args.result_dir, args.result_subset, "emb.csv")
     feature_df.to_csv(feature_path)
