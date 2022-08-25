@@ -9,47 +9,26 @@ from model import *
 from data import *
 
 # ----------------------------------------------------------------------------------------
-# make collate function for dataloader
-class OriginalCollate():
-    def __init__(self, num_points):
-        self.num_points = num_points
-
-    def __call__(self, batch_list):
-        # get batch size
-        batch_size = len(batch_list)
-
-        # * in *batch_list is transpose of batch_list
-        # There are as many tensors as there are batchsize in batch_list
-        # comp_batch and partial_batch are tuple which include many tensors
-        comp_batch, partial_batch = list(zip(*batch_list))
-        # transform tuple of complete point cloud to tensor
-        # torch.stack concatenate each tensors in the direction of the specified dim(dim=0)
-        comp_batch = torch.stack(comp_batch, dim=0).to(args.device)
-
-        # transform tuple of partial point cloud to tensor
-        # num of point in each tensor of partial point cloud change to the same num
-        partial_batch = list(partial_batch)
-        for i in range(batch_size):
-            n = len(partial_batch[i])
-            idx = np.random.permutation(n)
-            if len(idx) < self.num_points:
-                temp = np.random.randint(0, n, size=(self.num_points - n))
-                idx = np.concatenate([idx, temp])
-            partial_batch[i] = partial_batch[i][idx[:self.num_points], :]
-
-        partial_batch = torch.stack(partial_batch, dim=0).to(args.device)
-
-        # There are tensor which is board on args.device(default is cuda).
-        return comp_batch, partial_batch
-
-# ----------------------------------------------------------------------------------------
 # make function
+# ----------------------------------------------------------------------------------------
 # for export ply
 def export_ply(dir_path, file_name, type, point_cloud):
     pc = o3d.geometry.PointCloud()
     pc.points = o3d.utility.Vector3dVector(point_cloud)
     path = os.path.join(dir_path, type, str(file_name)+".ply")
     o3d.io.write_point_cloud(path, pc)
+
+def resize(ary, max, min):
+    max = max[0,:]
+    min = min[0,:]
+    ary[:,0] *= (max[0] - min[0])
+    ary[:,1] *= (max[1] - min[1])
+    ary[:,2] *= (max[2] - min[2])
+    ary[:,0] += min[0]
+    ary[:,1] += min[1]
+    ary[:,2] += min[2]
+
+    return ary
 
 # for test
 def test(device, model, dataloader, len_dataset, save_dir):
@@ -61,8 +40,8 @@ def test(device, model, dataloader, len_dataset, save_dir):
                               columns=np.arange(1, args.emb_dim+1))
     with torch.no_grad():
         for i, points in enumerate(dataloader):
-            comp = points[0]
-            partial = points[1]
+            comp, partial = points[0], points[1]
+            comp_max, comp_min, partial_max, partial_min = points[2], points[3], points[4], points[5]
             # prediction
             feature_v, coarse, fine = model(partial)
 
@@ -72,12 +51,16 @@ def test(device, model, dataloader, len_dataset, save_dir):
 
             comp = comp.detach().cpu().numpy()
             comp = comp.reshape(args.num_coarse*(args.grid_size**2), -1)
-            fine = fine.detach().cpu().numpy()
-            fine = fine.reshape(args.num_coarse*(args.grid_size**2), -1)
+            comp = resize(comp, comp_max, comp_min)
             partial = partial.detach().cpu().numpy()
             partial = partial.reshape(args.num_points, -1)
+            partial = resize(partial, partial_max, partial_min)
+            fine = fine.detach().cpu().numpy()
+            fine = fine.reshape(args.num_coarse*(args.grid_size**2), -1)
+            fine = resize(fine, comp_max, comp_min)
             coarse = coarse.detach().cpu().numpy()
             coarse = coarse.reshape(args.num_coarse, -1)
+            coarse = resize(coarse, comp_max, comp_min)
             export_ply(save_dir, i+1, "comp", comp) # save point cloud of comp
             export_ply(save_dir, i+1, "partial", partial) # save point cloud of partial
             export_ply(save_dir, i+1, "fine", fine) # save point cloud of fine
@@ -85,6 +68,7 @@ def test(device, model, dataloader, len_dataset, save_dir):
 
     feature_path = os.path.join(args.result_dir, args.result_subset, "emb.csv")
     feature_df.to_csv(feature_path)
+# ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -103,21 +87,21 @@ if __name__ == "__main__":
     test_dataset = MakeDataset(
         dataset_path=data_dir,
         subset=args.subset,
-        eval="test",
+        eval=args.result_eval,
         num_partial_pattern=0,
         device=args.device
     )
     test_dataloader = DataLoader(
         dataset=test_dataset,
-        batch_size=1,
-        collate_fn=OriginalCollate(args.num_points)
+        batch_size=1, # the batch size of test must be 1
+        collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)
     )
     len_dataset = len(test_dataset)
 
     # load model
     # you can't change here because this is same with train
     model = PCN(args.num_points, args.emb_dim, args.num_coarse, args.grid_size, args.device).to(args.device)
-    pth_path = os.path.join(args.save_dir, args.result_subset, args.select_result + "_weight.pth")
+    pth_path = os.path.join(args.save_dir, args.result_subset, args.select_result + "_weight.tar")
 
     checkpoint = torch.load(pth_path)
     model.load_state_dict(checkpoint["model_state_dict"])

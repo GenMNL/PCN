@@ -14,8 +14,8 @@ class Conv_ReLU(nn.Module):
 
         self.main= nn.Sequential(
             nn.Conv1d(self.in_channels, self.out_channels, 1),
-            nn.ReLU(), # nn.ReLU()はsequentialに入れられるが，F.reluは入れられない．（厳密にいうともう少しあるかも）
-            nn.BatchNorm1d(self.out_channels)) # 入力の点群にNNをかけたものを正規化している（tensor全体の平均0の分散1）．(1,3,5) -> (-1.2, 0, 1.2)
+            nn.BatchNorm1d(self.out_channels), # 入力の点群にNNをかけたものを正規化している（tensor全体の平均0の分散1）．(1,3,5) -> (-1.2, 0, 1.2)
+            nn.ReLU()) # nn.ReLU()はsequentialに入れられるが，F.reluは入れられない．（厳密にいうともう少しあるかも）
 
     def forward(self, input_data):
         out = self.main(input_data)

@@ -3,6 +3,7 @@
 *.pcd
 *.h5
 *.pth
+*.tar
 # result
 *.ply
 runs/

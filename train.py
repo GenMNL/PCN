@@ -11,55 +11,6 @@ from options import *
 import os
 
 # ----------------------------------------------------------------------------------------
-# get options
-# parser = argparse.ArgumentParser(description="Point Completion Network")
-# parser.add_argument("--num_points", default=2048)
-# parser.add_argument("--emb_dim", default=1024)
-# parser.add_argument("--num_coarse", default=1024)
-# parser.add_argument("--grid_size", default=4)
-# parser.add_argument("--batch_size", default=34)
-# parser.add_argument("--epochs", default=200)
-# parser.add_argument("--optimaizer", default="Adam", help="if you want to choose other optimization, you must change the code.")
-# parser.add_argument("--lr", default=1e-4, help="learning rate")
-# parser.add_argument("--dataset_dir", default="./data/ShapeNetCompletion")
-# parser.add_argument("--save_dir", default="./checkpoint")
-# parser.add_argument("--subset", default="chair")
-# parser.add_argument("--device", default="cuda")
-# args = parser.parse_args()
-# ----------------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------------------
-# make collate function for dataloader
-class OriginalCollate():
-    def __init__(self, num_points):
-        self.num_points = num_points
-        # os.environ["TOKENIZERS_PARALLELISM"] = "true"
-
-    def __call__(self, batch_list):
-        # get batch size
-        batch_size = len(batch_list)
-
-        # transform tuple of complete point cloud to tensor
-        comp_batch, partial_batch = list(zip(*batch_list))
-        comp_batch = torch.stack(comp_batch, dim=0).to(args.device)
-
-        # transform tuple of partial point cloud to tensor
-        partial_batch = list(partial_batch)
-        for i in range(batch_size):
-            n = len(partial_batch[i])
-            idx = np.random.permutation(n)
-            if len(idx) < self.num_points:
-                temp = np.random.randint(0, n, size=(self.num_points - n))
-                idx = np.concatenate([idx, temp])
-            partial_batch[i] = partial_batch[i][idx[:self.num_points], :]
-
-        partial_batch = torch.stack(partial_batch, dim=0).to(args.device)
-
-        return comp_batch, partial_batch
-
-# ----------------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------------------
 # prepare subroutine for training one epoch
 def train_one_epoch(device, model, dataloader, alpha, optim):
     model.train()
@@ -119,12 +70,12 @@ if __name__ == "__main__":
 
     #  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # make dataloader
-    data_dir = os.path.join(args.dataset_dir)
+    # data_dir = os.path.join(args.dataset_dir)
     train_dataset = MakeDataset(
-        dataset_path=data_dir,
+        dataset_path=args.dataset_dir,
         subset=args.subset,
         eval="train",
-        num_partial_pattern=0,
+        num_partial_pattern=4,
         device=args.device
     )
     train_dataloader = DataLoader(
@@ -132,23 +83,23 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         shuffle=True,
         drop_last=True,
-        collate_fn=OriginalCollate(args.num_points)
+        collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)
     ) # DataLoader is iterable object.
 
     # validation data
     val_dataset = MakeDataset(
-        dataset_path=data_dir,
+        dataset_path=args.dataset_dir,
         subset=args.subset,
         eval="val",
-        num_partial_pattern=0,
+        num_partial_pattern=4,
         device=args.device
     )
     val_dataloader = DataLoader(
         dataset=val_dataset,
-        batch_size=20,
+        batch_size=1,
         shuffle=True,
         drop_last=True,
-        collate_fn=OriginalCollate(args.num_points)
+        collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)
     )
 
     # check of data in dataloader
@@ -175,7 +126,7 @@ if __name__ == "__main__":
             alpha = 0.01
         elif epoch < 100:
             alpha = 0.1
-        elif epoch < 150:
+        elif epoch < 200:
             alpha = 0.5
         else:
             alpha = 1.0

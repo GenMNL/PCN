@@ -1,0 +1,32 @@
+[
+    {
+        "taxonomy_id":"0000",
+        "taxonomy_name":"bridge",
+        "test":[
+            "01zFh60OYgiR",
+            "28zqUD9ZamnR",
+            "20220822_bridge01"
+        ],
+        "train":[
+            "11CHnURLfHnq",
+            "13SDEbyBbJs3",
+            "17dxMtPkAdsM",
+            "20YsbgrejgtD",
+            "44IoDuR0SANh",
+            "46D04kXJ26zU",
+            "54o7KIErTnem",
+            "69UdyNdB7ems",
+            "75JpQHxVfhFz",
+            "84F98xpMQ9eO",
+            "88nY3XGdQU8f",
+            "99V5q1L9Houj",
+            "161I2xNJqVpr",
+            "569KTyJbthwA",
+            "6357IW5IMm7U"
+        ],
+        "val":[
+            "32ZiDatg0FDS",
+            "52d1qjdRSloc"
+        ]
+    }
+]
