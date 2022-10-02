@@ -44,26 +44,29 @@ class PointNet(nn.Module):
     def forward(self, input_data):
         input_data = input_data.permute(0, 2, 1) # torchのconv1dでは，真ん中をチャンネルとして畳みこむためpermuteで並び変え
 
-        # apply first stn
-        trans_3d = self.STN3d(input_data)
-        x = input_data.permute(0, 2, 1)
-        trans_x = torch.bmm(x, trans_3d)
-        trans_x = trans_x.permute(0, 2, 1)
+        # # apply first stn
+        # trans_3d = self.STN3d(input_data)
+        # x = input_data.permute(0, 2, 1)
+        # trans_input = torch.bmm(x, trans_3d)
+        # trans_input = trans_input.permute(0, 2, 1)
 
-        point_feature1 = self.MLP1(trans_x) # point feature only concern local feature
+        # point_feature1 = self.MLP1(trans_input) # point feature only concern local feature
+        point_feature1 = self.MLP1(input_data) # point feature only concern local feature
 
         # apply second stn
-        trans_256d = self.STN256d(point_feature1)
-        point_feature1 = point_feature1.permute(0, 2, 1)
-        trans_point_feature1 = torch.bmm(point_feature1, trans_256d)
-        trans_point_feature1 = trans_point_feature1.permute(0, 2, 1)
+        # trans_256d = self.STN256d(point_feature1)
+        # x = point_feature1.permute(0, 2, 1)
+        # trans_point_feature1 = torch.bmm(x, trans_256d)
+        # trans_point_feature1 = trans_point_feature1.permute(0, 2, 1)
 
-        global_feature1 = self.MaxPool1(trans_point_feature1) # get global feature
+        # global_feature1 = self.MaxPool1(trans_point_feature1) # get global feature
+        global_feature1 = self.MaxPool1(point_feature1) # get global feature
         global_feature1 = torch.unsqueeze(global_feature1, 2) # unsqueezeはサイズ１の次元をテンソルに追加する
 
         # concatenate global and point feature
         x = global_feature1.repeat(1, 1, self.num_points) # repeat self.num_points times ind direction of dim=2
-        x = torch.cat([x, trans_point_feature1], dim=1) # concatenate point feature and global feature tensors.
+        # x = torch.cat([x, trans_point_feature1], dim=1) # concatenate point feature and global feature tensors.
+        x = torch.cat([x, point_feature1], dim=1) # concatenate point feature and global feature tensors.
 
         # apply MLP and MaxPool for new concatenated tensor and get global feature
         point_feature2 = self.MLP2(x) # x = (batchsize, channel, num_points)

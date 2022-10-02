@@ -96,7 +96,7 @@ if __name__ == "__main__":
     )
     val_dataloader = DataLoader(
         dataset=val_dataset,
-        batch_size=1,
+        batch_size=2,
         shuffle=True,
         drop_last=True,
         collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)
@@ -110,9 +110,11 @@ if __name__ == "__main__":
     #  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # prepare model and optimaizer
     model = PCN(args.num_points, args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
-    if args.optimaizer == "Adam":
+    if args.optimizer == "Adam":
         optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=[0.9, 0.999])
-    lr_schdual = torch.optim.lr_scheduler.StepLR(optim, step_size=50, gamma=0.7)
+    elif args.optimizer == "SGD":
+        optim = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.6)
+    lr_schdual = torch.optim.lr_scheduler.StepLR(optim, step_size=int(args.epochs/4), gamma=0.7)
     writter = SummaryWriter()
     #  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

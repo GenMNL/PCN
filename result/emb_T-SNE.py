@@ -11,8 +11,11 @@ data = df.values # transform value of dataframe to ndarray
 labels = np.arange(1, 151)
 
 # apply T-SNE to the emb dim
-tsne = TSNE(n_components=2, perplexity=5)
+tsne = TSNE(n_components=2, perplexity=3)
 data_reduced = tsne.fit_transform(data)
+
+df = pd.DataFrame(data_reduced).T
+df.to_csv("./result/chair/2d_emb.csv")
 
 # visualizatin 2D plot
 fig = plt.figure()

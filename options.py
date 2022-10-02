@@ -12,7 +12,7 @@ def make_parser():
     parser.add_argument("--grid_size", default=4)
     parser.add_argument("--batch_size", default=6)
     parser.add_argument("--epochs", default=500)
-    parser.add_argument("--optimaizer", default="Adam", help="if you want to choose other optimization, you must change the code.")
+    parser.add_argument("--optimizer", default="Adam", help="if you want to choose other optimization, you must change the code.")
     parser.add_argument("--lr", default=1e-4, help="learning rate")
     parser.add_argument("--dataset_dir", default="./data/BridgeCompletion")
     parser.add_argument("--save_dir", default="./checkpoint")
