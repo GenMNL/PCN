@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 from pytorch3d.loss import chamfer_distance
 import argparse
+import datetime
 from tqdm import tqdm
 from model import *
 from data import *
@@ -66,41 +67,37 @@ if __name__ == "__main__":
     # get options
     parser = make_parser()
     args = parser.parse_args()
+
+
+    # make path of save params
+    dt_now = datetime.datetime.now()
+    save_date = str(dt_now.month) + str(dt_now.day) + "-" + str(dt_now.hour) + "-" + str(dt_now.minute)
+    save_dir = os.path.join(args.save_dir, args.subset, str(dt_now.year), save_date)
+    save_normal_path = os.path.join(save_dir, "normal_weight.tar")
+    save_best_path = os.path.join(save_dir, "best_weight.tar")
+    os.mkdir(save_dir)
+    # make condition file
+    with open(os.path.join(save_dir, "conditions.txt"), 'w') as f:
+        f.write('')
+
+    writter = SummaryWriter()
     #  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     #  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # make dataloader
     # data_dir = os.path.join(args.dataset_dir)
-    train_dataset = MakeDataset(
-        dataset_path=args.dataset_dir,
-        subset=args.subset,
-        eval="train",
-        num_partial_pattern=4,
-        device=args.device
-    )
-    train_dataloader = DataLoader(
-        dataset=train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        drop_last=True,
-        collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)
-    ) # DataLoader is iterable object.
+    train_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
+                                eval="train", num_partial_pattern=4, device=args.device)
+    train_dataloader = DataLoader(dataset=train_dataset, batch_size=args.batch_size,
+                                  shuffle=True, drop_last=True,
+                                  collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)) # DataLoader is iterable object.
 
     # validation data
-    val_dataset = MakeDataset(
-        dataset_path=args.dataset_dir,
-        subset=args.subset,
-        eval="val",
-        num_partial_pattern=4,
-        device=args.device
-    )
-    val_dataloader = DataLoader(
-        dataset=val_dataset,
-        batch_size=2,
-        shuffle=True,
-        drop_last=True,
-        collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)
-    )
+    val_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
+                              eval="val", num_partial_pattern=4, device=args.device)
+    val_dataloader = DataLoader(dataset=val_dataset, batch_size=2,
+                                shuffle=True, drop_last=True,
+                                collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device))
 
     # check of data in dataloader
     # for i, points in enumerate(tqdm(train_dataloader)):
@@ -114,8 +111,8 @@ if __name__ == "__main__":
         optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=[0.9, 0.999])
     elif args.optimizer == "SGD":
         optim = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.6)
-    lr_schdual = torch.optim.lr_scheduler.StepLR(optim, step_size=int(args.epochs/4), gamma=0.7)
-    writter = SummaryWriter()
+
+    #lr_schdual = torch.optim.lr_scheduler.StepLR(optim, step_size=int(args.epochs/4), gamma=0.7)
     #  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     #  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -132,31 +129,30 @@ if __name__ == "__main__":
             alpha = 0.5
         else:
             alpha = 1.0
+
         # get loss of one epoch
         train_loss = train_one_epoch(args.device, model, train_dataloader, alpha, optim)
         val_loss = val_one_epoch(args.device, model, val_dataloader)
+
         writter.add_scalar("train_loss", train_loss, epoch)
         writter.add_scalar("validation_loss", val_loss, epoch)
 
         # if val loss is better than best loss, update best loss to val loss
         if val_loss < best_loss:
             best_loss = val_loss
-            bl_path = os.path.join(args.save_dir, args.subset, "best_weight.tar")
-            torch.save({
-                        'epoch':epoch,
+            torch.save({'epoch':epoch,
                         'model_state_dict':model.state_dict(), 
                         'optimizer_state_dict':optim.state_dict(),
                         'loss':best_loss
-                        }, bl_path)
+                        }, save_best_path)
         # save normal weight 
-        nl_path = os.path.join(args.save_dir, args.subset, "normal_weight.tar")
-        torch.save({
-                    'epoch':epoch,
+        torch.save({'epoch':epoch,
                     'model_state_dict':model.state_dict(),
                     'optimizer_state_dict':optim.state_dict(),
                     'loss':val_loss
-                    }, nl_path)
-        lr_schdual.step()
+                    }, save_normal_path)
+        #lr_schdual.step()
 
     # close writter
     writter.close()
+

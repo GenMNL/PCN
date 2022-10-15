@@ -1,0 +1,3 @@
+1000 epochs
+lr_schduler False
+T-Net True

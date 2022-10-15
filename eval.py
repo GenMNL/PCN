@@ -72,7 +72,7 @@ def test(device, model, dataloader, len_dataset, save_dir):
 
 # ----------------------------------------------------------------------------------------
 if __name__ == "__main__":
-
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # get options
     parser = make_parser()
     args = parser.parse_args()
@@ -81,27 +81,19 @@ if __name__ == "__main__":
     result_dir = os.path.join(args.result_dir, args.subset)
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
-
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # make test dataset
     data_dir = os.path.join(args.dataset_dir)
-    test_dataset = MakeDataset(
-        dataset_path=data_dir,
-        subset=args.subset,
-        eval=args.result_eval,
-        num_partial_pattern=0,
-        device=args.device
-    )
-    test_dataloader = DataLoader(
-        dataset=test_dataset,
-        batch_size=1, # the batch size of test must be 1
-        collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device)
-    )
+    test_dataset = MakeDataset(dataset_path=data_dir, subset=args.subset,
+                               eval=args.result_eval, num_partial_pattern=0, device=args.device)
+    test_dataloader = DataLoader(dataset=test_dataset, batch_size=1, # the batch size of test must be 1
+                                 collate_fn=OriginalCollate(args.num_points, args.num_comp, args.device))
     len_dataset = len(test_dataset)
-
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # load model
     # you can't change here because this is same with train
     model = PCN(args.num_points, args.emb_dim, args.num_coarse, args.grid_size, args.device).to(args.device)
-    pth_path = os.path.join(args.save_dir, args.result_subset, args.select_result + "_weight.tar")
+    pth_path = os.path.join(args.save_dir, args.result_subset, args.year, args.date, args.select_result + "_weight.tar")
 
     checkpoint = torch.load(pth_path)
     model.load_state_dict(checkpoint["model_state_dict"])
