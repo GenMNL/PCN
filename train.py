@@ -1,6 +1,7 @@
 import torch
 import torch.nn as n
 from torch.utils.data import DataLoader
+import torch.multiprocessing as multiprocessing
 from tensorboardX import SummaryWriter
 from pytorch3d.loss import chamfer_distance
 import datetime
@@ -15,7 +16,6 @@ import os
 def train_one_epoch(model, dataloader, alpha, optim):
     model.train()
     train_loss = 0.0
-    count = 0
 
     for i, points in enumerate(tqdm(dataloader, desc="train")):
         comp = points[0]
@@ -23,25 +23,23 @@ def train_one_epoch(model, dataloader, alpha, optim):
         # prediction
         _, coarse, fine = model(partial)
         # get chamfer distance loss
-        CD_coarse = chamfer_distance(coarse, comp)
-        CD_fine = chamfer_distance(fine, comp)
-        CD_loss = CD_coarse[0] + alpha*CD_fine[0]
+        CD_coarse, _ = chamfer_distance(coarse, comp)
+        CD_fine, _ = chamfer_distance(fine, comp)
+        CD_loss = CD_coarse + alpha*CD_fine
 
         # backward + optim
         optim.zero_grad()
         CD_loss.backward()
         optim.step()
 
-        train_loss += CD_loss
-        count += 1
+        train_loss = train_loss + CD_loss
 
-    train_loss = float(train_loss)/count
+    train_loss = float(train_loss)/len(dataloader)
     return train_loss
 
 def val_one_epoch(model, dataloader):
     model.eval()
     val_loss = 0.0
-    count = 0
 
     with torch.no_grad():
         for i, points in enumerate(tqdm(dataloader, desc="validation")):
@@ -50,12 +48,11 @@ def val_one_epoch(model, dataloader):
             # prediction
             _, _, fine = model(partial)
             # get chamfer distance loss
-            CD_loss = chamfer_distance(fine, comp)
+            CD_loss, _ = chamfer_distance(fine, comp)
 
-            val_loss += CD_loss[0]
-            count += 1
+            val_loss = val_loss + CD_loss
 
-    val_loss = float(val_loss)/count
+    val_loss = float(val_loss)/len(dataloader)
     return val_loss
 
 # ----------------------------------------------------------------------------------------
@@ -85,22 +82,26 @@ if __name__ == "__main__":
     # make dataloader
     # data_dir = os.path.join(args.dataset_dir)
     train_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
-                                eval="train", num_partial_pattern=4, device=args.device)
+                                eval="train", num_partial_pattern=2, device=args.device)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=args.batch_size,
-                                  shuffle=True, drop_last=True,
+                                  shuffle=True, drop_last=True, num_workers=4,
                                   collate_fn=OriginalCollate(args.device)) # DataLoader is iterable object.
 
     # validation data
     val_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
-                              eval="val", num_partial_pattern=4, device=args.device)
-    val_dataloader = DataLoader(dataset=val_dataset, batch_size=2,
-                                shuffle=True, drop_last=True,
+                              eval="val", num_partial_pattern=2, device=args.device)
+    val_dataloader = DataLoader(dataset=val_dataset, batch_size=args.batch_size,
+                                shuffle=True, drop_last=True, num_workers=4,
                                 collate_fn=OriginalCollate(args.device))
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # prepare model and optimaizer
-    model = PCN(args.num_points, args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
+    model = PCN(args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
+
+    if multiprocessing.get_start_method() == 'fork':
+        multiprocessing.set_start_method('spawn', force=True)
+        print("{} setup done".format(multiprocessing.get_start_method()))
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # main loop

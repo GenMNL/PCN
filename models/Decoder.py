@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from module import Conv_ReLU
+from models.module import Conv_ReLU
 
 # ----------------------------------------------------------------------------------------
 # AffineDecoder is fully connection type decoder which generate coarse point cloud

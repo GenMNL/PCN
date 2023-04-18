@@ -1,15 +1,15 @@
 import torch
 import torch.nn as nn
-import Encoder
-import Decoder
+from models.Encoder import PointNet
+from models.Decoder import AffineDecoder, FineDecoder
 
 # ----------------------------------------------------------------------------------------
 class PCN(nn.Module):
-    def __init__(self, num_points, emb_dim, num_coarse, grid_size, device):
+    def __init__(self, emb_dim, num_coarse, grid_size, device):
         super(PCN, self).__init__()
-        self.Encoder = Encoder.PointNet(num_points, emb_dim).to(device)
-        self.Decoder_coarse= Decoder.AffineDecoder(num_coarse, emb_dim).to(device)
-        self.Decoder_fine = Decoder.FineDecoder(grid_size, num_coarse, emb_dim).to(device)
+        self.Encoder = PointNet(emb_dim).to(device)
+        self.Decoder_coarse = AffineDecoder(num_coarse, emb_dim).to(device)
+        self.Decoder_fine = FineDecoder(grid_size, num_coarse, emb_dim).to(device)
 
     def forward(self, input_data):
         feature_v = self.Encoder(input_data)

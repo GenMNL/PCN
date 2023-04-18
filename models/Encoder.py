@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from module import Conv_ReLU
-from stn import STNkd
+from models.module import Conv_ReLU
+from models.stn import STNkd
 
 # ----------------------------------------------------------------------------------------
 # PCN uses PointNet for encoder 
@@ -13,7 +13,7 @@ class PointNet(nn.Module):
 
         # initial spational transformed network
         self.STN3d = nn.Sequential(
-            STNkd(3, self.num_points)
+            STNkd(3)
         )
         # MLP1 use for getting point feature
         self.MLP1 = nn.Sequential(
@@ -22,7 +22,7 @@ class PointNet(nn.Module):
         )
         # second spational transformed network
         self.STN256d = nn.Sequential(
-            STNkd(256, self.num_points)
+            STNkd(256)
         )
         # MLP2 use for getting point feature which concern global and point feature
         self.MLP2 = nn.Sequential(
