@@ -2,14 +2,11 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-from module import *
 
 class STNkd(nn.Module):
-    def __init__(self, num_channels, num_points, device):
+    def __init__(self, num_channels):
         super(STNkd, self).__init__()
         self.num_channels = num_channels
-        self.num_points = num_points
-        self.device = device
 
         self.Conv_ReLU = nn.Sequential(
             nn.Conv1d(self.num_channels, 64, 1),
@@ -22,9 +19,6 @@ class STNkd(nn.Module):
             nn.BatchNorm1d(1024),
             nn.ReLU()
         )
-        self.MaxPool = nn.Sequential(
-            MaxPooling(1024, self.num_points)
-        )
         self.fc = nn.Sequential(
             nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
@@ -36,15 +30,17 @@ class STNkd(nn.Module):
         )
 
     def forward(self, input):
+        device = input.device
+
         batchsize = input.shape[0]
 
         x = self.Conv_ReLU(input)
-        x = self.MaxPool(x)
+        x = torch.max(x, dim=2)[0]
         x = self.fc(x)
 
         iden = np.eye(self.num_channels).flatten().astype(np.float32)
         iden = Variable(torch.from_numpy(iden)).view(1, self.num_channels**2).repeat(batchsize, 1)
-        iden = iden.to(self.device)
+        iden = iden.to(device)
 
         out = x + iden
         out = out.view(-1, self.num_channels, self.num_channels)

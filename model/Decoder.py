@@ -2,16 +2,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from Encoder import *
-from module import *
+from models.module import *
 
 # ----------------------------------------------------------------------------------------
 # AffineDecoder is fully connection type decoder which generate coarse point cloud
 class AffineDecoder(nn.Module):
-    def __init__(self, num_coarse, emb_dim, device):
+    def __init__(self, num_coarse, emb_dim):
         super(AffineDecoder, self).__init__()
         self.num_coarse = num_coarse
         self.emb_dim = emb_dim
-        self.device = device
 
         self.MakeCoarse = nn.Sequential(
             nn.Linear(self.emb_dim, 1024),
@@ -32,12 +31,11 @@ class AffineDecoder(nn.Module):
 # ----------------------------------------------------------------------------------------
 # FineDecoder is folding type decoder which make fine point cloud
 class FineDecoder(nn.Module):
-    def __init__(self, grid_size, num_coarse, emb_dim, device):
+    def __init__(self, grid_size, num_coarse, emb_dim):
         super(FineDecoder, self).__init__()
         self.grid_size = grid_size
         self.num_coarse = num_coarse
         self.emb_dim = emb_dim
-        self.device = device
         self.MLP = nn.Sequential(
             Conv_ReLU(self.emb_dim+2+3, 512),
             Conv_ReLU(512, 512),
@@ -45,10 +43,12 @@ class FineDecoder(nn.Module):
         )
 
     def forward(self, coarse_output, global_feature):
+        device = coarse_output.device
+
         self.batchsize = coarse_output.shape[0]
 
         # make grid tensor
-        grid_node = torch.linspace(-0.5, 0.5, steps=self.grid_size, device=self.device)
+        grid_node = torch.linspace(-0.5, 0.5, steps=self.grid_size, device=device)
         grid = torch.meshgrid(grid_node, grid_node) # This is tuple object which contains x and y coordinates
         grid = torch.stack(grid, dim=2) # concatenate grid_x and grid_y in the direction of axis=2
         grid = grid.view(-1, 2) # make one of grid feature vector

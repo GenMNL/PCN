@@ -4,9 +4,9 @@ import open3d as o3d
 import numpy as np
 import pandas as pd
 import os
-from options import *
-from model import *
-from data import *
+from utils.options import *
+from utils.data import *
+from models.model import *
 
 # ----------------------------------------------------------------------------------------
 # make function
