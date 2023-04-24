@@ -82,21 +82,21 @@ if __name__ == "__main__":
     # make dataloader
     # data_dir = os.path.join(args.dataset_dir)
     train_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
-                                eval="train", num_partial_pattern=2, device=args.device)
+                                eval="train", num_partial_pattern=4, device=args.device)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=args.batch_size,
                                   shuffle=True, drop_last=True, num_workers=4,
                                   collate_fn=OriginalCollate(args.device)) # DataLoader is iterable object.
 
     # validation data
     val_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
-                              eval="val", num_partial_pattern=2, device=args.device)
+                              eval="val", num_partial_pattern=1, device=args.device)
     val_dataloader = DataLoader(dataset=val_dataset, batch_size=args.batch_size,
-                                shuffle=True, drop_last=True, num_workers=4,
+                                shuffle=True, drop_last=True,# num_workers=4,
                                 collate_fn=OriginalCollate(args.device))
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # prepare model and optimaizer
-    model = PCN(args.emb_dim,args.num_coarse, args.grid_size, args.device).to(args.device)
+    model = PCN(args.emb_dim, args.num_coarse, args.grid_size, args.device).to(args.device)
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     if multiprocessing.get_start_method() == 'fork':
@@ -109,11 +109,11 @@ if __name__ == "__main__":
     for epoch in tqdm(range(1, args.epochs+1), desc="main loop"):
 
         # determin the ration of loss
-        if epoch < 50:
+        if epoch < 40:
             alpha = 0.01
-        elif epoch < 100:
+        elif epoch < 80:
             alpha = 0.1
-        elif epoch < 200:
+        elif epoch < 120:
             alpha = 0.5
         else:
             alpha = 1.0

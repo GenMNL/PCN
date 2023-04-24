@@ -23,7 +23,7 @@ class AffineDecoder(nn.Module):
         out = torch.unsqueeze(out, dim=2)
         out = out.view(-1, self.num_coarse, 3)
 
-        return out
+        return out # (B, N, C)
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ class FineDecoder(nn.Module):
     def forward(self, coarse_output, global_feature):
         device = coarse_output.device
 
-        self.batchsize = coarse_output.shape[0]
+        B, _, _ = coarse_output.shape
 
         # make grid tensor
         grid_node = torch.linspace(-0.5, 0.5, steps=self.grid_size, device=device)
@@ -52,24 +52,24 @@ class FineDecoder(nn.Module):
         grid = grid.view(-1, 2) # make one of grid feature vector
         grid_feature = grid.repeat(self.num_coarse, 1)
         grid_feature = torch.unsqueeze(grid_feature, dim=0)
-        grid_feature = grid_feature.repeat(self.batchsize, 1, 1)
+        grid_feature = grid_feature.repeat(B, 1, 1) # (B, N, C)
 
         # expand coarse output tensor
         x = coarse_output.repeat(1, 1, self.grid_size**2)
-        coarse_feature = x.view(self.batchsize, self.num_coarse*(self.grid_size**2), -1)
+        coarse_feature = x.view(B, self.num_coarse*(self.grid_size**2), -1) # (B, N, C)
 
         # expand global feature tensor
         global_feature = torch.unsqueeze(global_feature, dim=1)
         global_feature = global_feature.repeat(1, self.num_coarse*(self.grid_size**2), 1)
 
         # concatenate all feature tensors
-        features = torch.cat([global_feature, grid_feature, coarse_feature], dim=2)
+        features = torch.cat([global_feature, grid_feature, coarse_feature], dim=2) # (B, N, C)
 
         # adapt layer to features
-        features = features.permute(0, 2, 1)
+        features = features.permute(0, 2, 1) # (B, C, N)
         fine_output = self.MLP(features)
-        fine_output = fine_output + coarse_feature.permute(0, 2, 1)
-        fine_output = fine_output.permute(0, 2, 1)
+        fine_output = fine_output + coarse_feature.permute(0, 2, 1) # (B, C, N)
+        fine_output = fine_output.permute(0, 2, 1) # (B, N, C)
 
         return fine_output
 
