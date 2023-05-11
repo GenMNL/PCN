@@ -82,14 +82,14 @@ if __name__ == "__main__":
     # make dataloader
     # data_dir = os.path.join(args.dataset_dir)
     train_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
-                                eval="train", num_partial_pattern=4, device=args.device)
+                                eval="train", num_partial_pattern=3, device=args.device)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=args.batch_size,
-                                  shuffle=True, drop_last=True, num_workers=4,
+                                  shuffle=True, drop_last=True,# num_workers=4,
                                   collate_fn=OriginalCollate(args.device)) # DataLoader is iterable object.
 
     # validation data
     val_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
-                              eval="val", num_partial_pattern=1, device=args.device)
+                              eval="val", num_partial_pattern=3, device=1)
     val_dataloader = DataLoader(dataset=val_dataset, batch_size=args.batch_size,
                                 shuffle=True, drop_last=True,# num_workers=4,
                                 collate_fn=OriginalCollate(args.device))
@@ -99,9 +99,9 @@ if __name__ == "__main__":
     model = PCN(args.emb_dim, args.num_coarse, args.grid_size, args.device).to(args.device)
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    if multiprocessing.get_start_method() == 'fork':
-        multiprocessing.set_start_method('spawn', force=True)
-        print("{} setup done".format(multiprocessing.get_start_method()))
+    # if multiprocessing.get_start_method() == 'fork':
+        # multiprocessing.set_start_method('spawn', force=True)
+        # print("{} setup done".format(multiprocessing.get_start_method()))
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # main loop
@@ -119,8 +119,8 @@ if __name__ == "__main__":
             alpha = 1.0
 
         # get loss of one epoch
-        train_loss = train_one_epoch(model, train_dataloader, alpha, optim)
         val_loss = val_one_epoch(model, val_dataloader)
+        train_loss = train_one_epoch(model, train_dataloader, alpha, optim)
 
         writter.add_scalar("train_loss", train_loss, epoch)
         writter.add_scalar("validation_loss", val_loss, epoch)
