@@ -20,9 +20,9 @@ def make_parser():
     # make parser for test
     parser.add_argument("--result_dir", default="./result")
     parser.add_argument("--select_result", default="best") # you can select best or normal
-    parser.add_argument("--result_subset", default="bridge")
+    parser.add_argument("--result_subset", default="all")
     parser.add_argument("--result_eval", default="test")
-    parser.add_argument("--year", default="2022")
+    parser.add_argument("--year", default="2023")
     parser.add_argument("-d", "--date", type=str)
 
     # 

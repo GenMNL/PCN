@@ -96,10 +96,17 @@ if __name__ == "__main__":
     # load model
     # you can't change here because this is same with train
     model = PCN(args.emb_dim, args.num_coarse, args.grid_size, args.device).to(args.device)
-    pth_path = os.path.join(args.save_dir, args.result_subset, args.year, args.date, args.select_result + "_weight.tar")
+    tar_path = os.path.join(args.save_dir, args.result_subset, args.year, args.date, args.select_result + "_weight.tar")
 
-    checkpoint = torch.load(pth_path)
+    checkpoint = torch.load(tar_path)
     model.load_state_dict(checkpoint["model_state_dict"])
+
+    result_dir = 'result'
+    result_txt = os.path.join(result_dir, 'result.txt')
+    with open(result_txt, 'w') as f:
+        f.write('train_data: {}\n'.format(args.date))
+        f.write('epoch: {}\n'.format(checkpoint['epoch']))
+        f.write('loss : {}\n'.format(checkpoint['loss']))
 
     result_dir = os.path.join(args.result_dir, args.result_subset)
     test(model, test_dataloader, len_dataset, result_dir)
