@@ -1,5 +1,5 @@
-import numpy as np
 import os
+import numpy
 
 a = ["a", "b"]
 b = ["c", "d"]

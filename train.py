@@ -7,7 +7,8 @@ from pytorch3d.loss import chamfer_distance
 import datetime
 from tqdm import tqdm
 from models.model import *
-from utils.data import *
+# from utils.data import *
+from utils.data_component-wise import *
 from utils.options import *
 import os
 
