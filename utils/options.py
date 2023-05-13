@@ -7,7 +7,6 @@ def make_parser():
     # make parser for train (part of this is used for test)
     parser.add_argument("--emb_dim", default=1024, type=int)
     parser.add_argument("--num_coarse", default=1024, type=int)
-    parser.add_argument("--num_comp", default=16384, type=int)
     parser.add_argument("--grid_size", default=4, type=int)
     parser.add_argument("--batch_size", default=3, type=int)
     parser.add_argument("--epochs", default=200, type=int)

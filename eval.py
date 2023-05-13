@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # make test dataset
     data_dir = os.path.join(args.dataset_dir)
     test_dataset = MakeDataset(dataset_path=data_dir, subset=args.subset,
-                               eval=args.result_eval, num_partial_pattern=1, device=args.device)
+                               eval=args.result_eval, num_partial_pattern=3, device=args.device)
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=1, # the batch size of test must be 1
                                  collate_fn=OriginalCollate(args.device))
     len_dataset = len(test_dataset)

@@ -130,7 +130,7 @@ class MakeDataset(Dataset):
         comp_pc = o3d.io.read_point_cloud(data_comp_path)
         comp_pc = np.asarray(comp_pc.points)
         comp_pc, comp_max, comp_min = self.transform(comp_pc)
-        comp_pc = torch.tensor(comp_pc, dtype=torch.float, device=device)
+        comp_pc = torch.tensor(comp_pc, dtype=torch.float, device=self.device)
 
         # partial point cloud
         partial_pc = o3d.io.read_point_cloud(data_partial_path)

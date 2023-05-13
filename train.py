@@ -17,7 +17,7 @@ def train_one_epoch(model, dataloader, alpha, optim):
     model.train()
     train_loss = 0.0
 
-    for i, points in enumerate(tqdm(dataloader, desc="train")):
+    for i, points in enumerate(tqdm(dataloader, desc="train", leave=False)):
         comp = points[0]
         partial = points[1]
         # prediction
@@ -42,7 +42,7 @@ def val_one_epoch(model, dataloader):
     val_loss = 0.0
 
     with torch.no_grad():
-        for i, points in enumerate(tqdm(dataloader, desc="validation")):
+        for i, points in enumerate(tqdm(dataloader, desc="validation", leave=False)):
             comp = points[0]
             partial = points[1]
             # prediction
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     # validation data
     val_dataset = MakeDataset(dataset_path=args.dataset_dir, subset=args.subset,
-                              eval="val", num_partial_pattern=3, device=1)
+                              eval="val", num_partial_pattern=3, device=args.device)
     val_dataloader = DataLoader(dataset=val_dataset, batch_size=args.batch_size,
                                 shuffle=True, drop_last=True,# num_workers=4,
                                 collate_fn=OriginalCollate(args.device))
@@ -99,6 +99,10 @@ if __name__ == "__main__":
     model = PCN(args.emb_dim, args.num_coarse, args.grid_size, args.device).to(args.device)
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
 
+    # load parameters for decoder
+    tar_path = os.path.join("./checkpoint/all/2023/424-12-8/best_weight.tar")
+    train_tar = torch.load(tar_path)
+    model.load_state_dict(train_tar["model_state_dict"])
     # if multiprocessing.get_start_method() == 'fork':
         # multiprocessing.set_start_method('spawn', force=True)
         # print("{} setup done".format(multiprocessing.get_start_method()))
@@ -119,8 +123,8 @@ if __name__ == "__main__":
             alpha = 1.0
 
         # get loss of one epoch
-        val_loss = val_one_epoch(model, val_dataloader)
         train_loss = train_one_epoch(model, train_dataloader, alpha, optim)
+        val_loss = val_one_epoch(model, val_dataloader)
 
         writter.add_scalar("train_loss", train_loss, epoch)
         writter.add_scalar("validation_loss", val_loss, epoch)
